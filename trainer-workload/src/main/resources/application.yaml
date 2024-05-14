@@ -1,13 +1,20 @@
 spring:
   application:
-    name: TRAINER-SERVICE
+    name: TRAINER-WORKLOAD-SERVICE
+
+  datasource:
+    url: jdbc:h2:mem:mydb
+    username: sa
+    password: password
+    driverClassName: org.h2.Driver
+  jpa:
+    database-platform: org.hibernate.dialect.H2Dialect
 
   cloud:
     config:
       enabled: false
 
-  autoconfigure:
-    exclude: org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
+
 
 
 eureka:
@@ -18,3 +25,6 @@ eureka:
     register-with-eureka: true
     service-url:
       defaultZone: http://localhost:8761/eureka/
+
+server:
+  port: 8082

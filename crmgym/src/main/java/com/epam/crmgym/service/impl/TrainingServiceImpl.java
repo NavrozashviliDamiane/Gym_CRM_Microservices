@@ -1,19 +1,18 @@
 package com.epam.crmgym.service.impl;
 
+import com.epam.crmgym.client.TrainerWorkloadClient;
+import com.epam.crmgym.dto.client.TrainingSessionDTO;
 import lombok.extern.slf4j.Slf4j;
 import com.epam.crmgym.entity.*;
 import com.epam.crmgym.repository.TraineeRepository;
 import com.epam.crmgym.repository.TrainerRepository;
 import com.epam.crmgym.repository.TrainingRepository;
-import com.epam.crmgym.repository.TrainingTypeRepository;
-import com.epam.crmgym.service.AuthenticateService;
 import com.epam.crmgym.service.TrainingService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Date;
-import java.util.List;
 
 @Slf4j
 @Service
@@ -22,16 +21,16 @@ public class TrainingServiceImpl implements TrainingService {
     private final TrainingRepository trainingRepository;
     private final TraineeRepository traineeRepository;
     private final TrainerRepository trainerRepository;
-    private final TrainingTypeRepository trainingTypeRepository;
-    private final AuthenticateService authenticateService;
+
+    private final TrainerWorkloadClient trainerWorkloadClient;
+
 
     @Autowired
-    public TrainingServiceImpl(TrainingRepository trainingRepository, TraineeRepository traineeRepository, TrainerRepository trainerRepository, TrainingTypeRepository trainingTypeRepository, AuthenticateService authenticateService) {
+    public TrainingServiceImpl(TrainingRepository trainingRepository, TraineeRepository traineeRepository, TrainerRepository trainerRepository, TrainerWorkloadClient trainerWorkloadClient) {
         this.trainingRepository = trainingRepository;
         this.traineeRepository = traineeRepository;
         this.trainerRepository = trainerRepository;
-        this.trainingTypeRepository = trainingTypeRepository;
-        this.authenticateService = authenticateService;
+        this.trainerWorkloadClient = trainerWorkloadClient;
     }
 
 
@@ -58,6 +57,11 @@ public class TrainingServiceImpl implements TrainingService {
         training.setTrainingDate(trainingDate);
         training.setTrainingDuration(trainingDuration);
         training.setTrainingType(trainingType);
+
+        TrainingSessionDTO sessionDTO = new TrainingSessionDTO(trainerUsername, trainer.getUser().getFirstName(),
+                trainer.getUser().getLastName(), trainer.getUser().isActive(),
+                trainingDate, trainingDuration, "ADD");
+        trainerWorkloadClient.manageTrainingSession(sessionDTO);
 
 
         log.info("Training Created Successfully");
