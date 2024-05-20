@@ -1,17 +1,21 @@
 package com.epam.trainerworkload.controller;
 
-
+import com.epam.trainerworkload.dto.GetTotalTrainingHoursRequestDTO;
 import com.epam.trainerworkload.dto.TrainingSessionDTO;
-import com.epam.trainerworkload.entity.TrainingSession;
 import com.epam.trainerworkload.service.TrainerWorkloadService;
+import com.epam.trainerworkload.util.transaction.TransactionIdGenerator;
+import jakarta.validation.Valid;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 
 @RestController
+@Slf4j
 @RequestMapping("/workload")
+@Validated
 public class TrainerWorkloadController {
 
     private final TrainerWorkloadService service;
@@ -21,22 +25,22 @@ public class TrainerWorkloadController {
         this.service = service;
     }
 
-    @PostMapping("/sessions")
-    public ResponseEntity<String> addTrainingSession(@RequestBody TrainingSessionDTO dto) {
-        service.addOrUpdateTrainingSession(dto);
-        return ResponseEntity.ok("Session added successfully");
+    @PostMapping
+    public ResponseEntity<String> manageTrainingSession(@Valid @RequestBody TrainingSessionDTO dto) {
+        String transactionId = TransactionIdGenerator.generateTransactionId();
+        log.info("Transaction ID: {} - Received request to get create Session",
+                transactionId);
+        service.manageTrainingSession(dto);
+        return ResponseEntity.ok("Session processed successfully");
     }
 
-    @GetMapping("/sessions/{username}/{year}/{month}")
-    public ResponseEntity<List<TrainingSession>> getTrainingSessions(@PathVariable String username, @PathVariable int year, @PathVariable int month) {
-        List<TrainingSession> sessions = service.getTrainerMonthlyWorkload(username, year, month);
-        return ResponseEntity.ok(sessions);
-    }
 
-    @GetMapping("/total-hours/{username}/{year}/{month}")
-    public ResponseEntity<Integer> getTotalTrainingHours(@PathVariable String username, @PathVariable int year, @PathVariable int month) {
-        int totalHours = service.getTotalTrainingHours(username, year, month);
+    @GetMapping("/total-hours")
+    public ResponseEntity<Integer> getTotalTrainingHours(@Valid @RequestBody GetTotalTrainingHoursRequestDTO requestDTO) {
+        String transactionId = TransactionIdGenerator.generateTransactionId();
+        log.info("Transaction ID: {} - Received request to get total training hours for username: {}, year: {}, month: {}",
+                transactionId, requestDTO.getUsername(), requestDTO.getYear(), requestDTO.getMonth());
+        int totalHours = service.getTotalTrainingHours(requestDTO);
         return ResponseEntity.ok(totalHours);
     }
 }
-

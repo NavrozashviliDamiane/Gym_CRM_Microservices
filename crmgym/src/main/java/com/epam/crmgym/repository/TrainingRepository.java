@@ -39,7 +39,6 @@ public interface TrainingRepository extends JpaRepository<Training, Long> {
     List<Training> findByTrainerIdAndTrainingDateBefore(Long trainerId, Date toDate);
 
 
-//TODO query annotations
 
 
     @Query("SELECT t FROM Training t WHERE t.trainee.id = :tnId AND t.trainingDate BETWEEN :frDt AND :toDt AND t.trainer.id = :trId AND t.trainingType.id = :tyId AND t.trainingDuration > :dur")

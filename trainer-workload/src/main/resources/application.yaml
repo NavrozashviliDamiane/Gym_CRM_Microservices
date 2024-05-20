@@ -14,6 +14,9 @@ spring:
     config:
       enabled: false
 
+security:
+  jwt:
+    secret-key: dGhpcyBpcyBteSBzZWN1cmUga2V5IGFuZCB5b3UgY2Fubm90IGhhY2sgaXQ=
 
 
 

@@ -1,5 +1,7 @@
 package com.epam.crmgym.service.impl;
 
+import com.epam.crmgym.client.TrainerWorkloadClient;
+import com.epam.crmgym.dto.client.TrainingSessionDTO;
 import com.epam.crmgym.dto.trainee.TraineeProfileDTO;
 import com.epam.crmgym.dto.trainer.TrainerDTO;
 import com.epam.crmgym.dto.trainer.TrainerResponse;
@@ -20,7 +22,6 @@ import com.epam.crmgym.service.TrainingService;
 import com.epam.crmgym.service.UserService;
 import com.epam.crmgym.util.trainee.GetTraineeTrainingsHelper;
 import com.epam.crmgym.util.trainee.UpdateTraineeTrainersListHelper;
-import io.micrometer.core.instrument.Counter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.time.DateUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,7 +29,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -38,6 +38,9 @@ public class TraineeServiceImpl implements TraineeService {
     private final UserService userService;
     private final AuthenticateService authenticateService;
     private final TrainingService trainingService;
+
+    private final TrainerWorkloadClient trainerWorkloadClient;
+
 
     private final TrainingToTrainerMapper trainingToTrainerMapper;
 
@@ -57,7 +60,7 @@ public class TraineeServiceImpl implements TraineeService {
     @Autowired
     public TraineeServiceImpl(TraineeRepository traineeRepository, UserService userService,
                               AuthenticateService authenticateService,
-                              TrainingService trainingService, TrainingRepository trainingRepository,
+                              TrainingService trainingService, TrainerWorkloadClient trainerWorkloadClient, TrainingRepository trainingRepository,
                               TrainerRepository trainerRepository, TrainingTypeRepository trainingTypeRepository,
                               TrainingToTrainerMapper trainingToTrainerMapper,
                               GetTraineeTrainingsHelper getTraineeTrainingsHelper, UpdateTraineeTrainersListHelper updateTraineeTrainersListHelper
@@ -66,6 +69,7 @@ public class TraineeServiceImpl implements TraineeService {
         this.userService = userService;
         this.authenticateService = authenticateService;
         this.trainingService = trainingService;
+        this.trainerWorkloadClient = trainerWorkloadClient;
         this.trainingRepository = trainingRepository;
         this.trainerRepository = trainerRepository;
         this.trainingTypeRepository = trainingTypeRepository;
@@ -193,13 +197,25 @@ public class TraineeServiceImpl implements TraineeService {
     @Override
     @Transactional
     public void deleteTraineeByUsername(String username) {
-
         String transactionId = UUID.randomUUID().toString();
         log.info("Transaction started for trainee delete. Transaction ID: {}", transactionId);
 
         Trainee trainee = traineeRepository.findByUserUsername(username);
 
         List<Training> trainings = trainingRepository.findByTraineeId(trainee.getId());
+        for (Training training : trainings) {
+            TrainingSessionDTO sessionDTO = new TrainingSessionDTO();
+            sessionDTO.setTrainerUsername(training.getTrainer().getUser().getUsername());
+            sessionDTO.setFirstName(training.getTrainer().getUser().getFirstName());
+            sessionDTO.setLastName(training.getTrainer().getUser().getLastName());
+            sessionDTO.setActive(training.getTrainer().getUser().isActive());
+            sessionDTO.setTrainingDate(training.getTrainingDate());
+            sessionDTO.setTrainingDuration(training.getTrainingDuration());
+            sessionDTO.setActionType("DELETE");
+
+            trainerWorkloadClient.manageTrainingSession(sessionDTO);
+        }
+
         trainingRepository.deleteAll(trainings);
         log.info("Transaction successful of deleting trainee's associate training. Transaction ID: {}", transactionId);
 

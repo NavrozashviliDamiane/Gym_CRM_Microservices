@@ -111,5 +111,4 @@ public class JwtService {
         User user = userRepository.findByUsername(username);
         return user != null && user.getPassword().equals(password);
     }
-
 }

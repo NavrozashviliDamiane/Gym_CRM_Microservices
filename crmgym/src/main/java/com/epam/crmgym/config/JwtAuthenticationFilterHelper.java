@@ -13,7 +13,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 
-
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Map;
@@ -23,11 +22,8 @@ import java.util.Map;
 public class JwtAuthenticationFilterHelper {
 
     private final JwtService jwtService;
-
     private final UserRepository userRepository;
-
     private final Map<String, Integer> unsuccessfulLoginAttempts;
-
     private final Map<String, Long> blockedIPs;
 
     private static final String AUTH_HEADER_PREFIX = "Bearer ";
@@ -90,7 +86,7 @@ public class JwtAuthenticationFilterHelper {
 
             if (requestBodyUsername != null && requestBodyUsername.equals(userDetails.getUsername())) {
                 if (!jwtService.isTokenBlacklisted(jwt)) {
-                    authenticateUser(userDetails);
+                    authenticateUser(userDetails, jwt);
                 } else {
                     handleBlacklistedToken(response);
                 }
@@ -98,9 +94,10 @@ public class JwtAuthenticationFilterHelper {
         }
     }
 
-    private void authenticateUser(UserDetails userDetails) {
-        UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+    private void authenticateUser(UserDetails userDetails, String jwt) {
+        UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(userDetails, jwt, userDetails.getAuthorities());
         SecurityContextHolder.getContext().setAuthentication(authentication);
+        log.info("Authenticated user: {}", userDetails.getUsername());
     }
 
     private void handleBlockedIP(HttpServletResponse response, String clientIP) throws IOException {
@@ -109,7 +106,6 @@ public class JwtAuthenticationFilterHelper {
         response.setStatus(HttpStatus.TOO_MANY_REQUESTS.value());
         response.getWriter().write(logMessage);
     }
-
 
     private void handleUnauthorized(HttpServletResponse response) throws IOException {
         log.info("Token not provided.");
