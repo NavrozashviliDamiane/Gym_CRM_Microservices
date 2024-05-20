@@ -161,9 +161,9 @@ public class TraineeController {
             return new ResponseEntity<>("Trainee profile deleted successfully", HttpStatus.OK);
 
         } catch (Exception e) {
-            log.info("\"Error occurred while processing /api/trainees/delete-profile endpoint.\", e");
+            log.info("\"Error occurred while processing /api/trainees/delete-profile endpoint.\", e" );
 
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An error occurred while processing the request");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An error occurred while processing the request.  " + e.getMessage());
         }
     }
 

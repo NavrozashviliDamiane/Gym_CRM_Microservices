@@ -202,9 +202,10 @@ public class TraineeServiceImpl implements TraineeService {
 
         Trainee trainee = traineeRepository.findByUserUsername(username);
 
+        TrainingSessionDTO sessionDTO = new TrainingSessionDTO();
+
         List<Training> trainings = trainingRepository.findByTraineeId(trainee.getId());
         for (Training training : trainings) {
-            TrainingSessionDTO sessionDTO = new TrainingSessionDTO();
             sessionDTO.setTrainerUsername(training.getTrainer().getUser().getUsername());
             sessionDTO.setFirstName(training.getTrainer().getUser().getFirstName());
             sessionDTO.setLastName(training.getTrainer().getUser().getLastName());
@@ -214,6 +215,14 @@ public class TraineeServiceImpl implements TraineeService {
             sessionDTO.setActionType("DELETE");
 
             trainerWorkloadClient.manageTrainingSession(sessionDTO);
+        }
+
+
+        String response = trainerWorkloadClient.manageTrainingSession(sessionDTO);
+
+        if (response.startsWith("FALLBACK")) {
+            log.error("Transaction ID: {} - Failed to manage training session: {}", transactionId, response);
+            throw new RuntimeException("Failed to manage training session: " + response);
         }
 
         trainingRepository.deleteAll(trainings);
