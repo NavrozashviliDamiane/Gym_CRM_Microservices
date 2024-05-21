@@ -1,6 +1,5 @@
 package com.epam.crmgym.config;
 
-
 import com.epam.crmgym.entity.User;
 import com.epam.crmgym.repository.UserRepository;
 import org.springframework.context.annotation.Bean;
